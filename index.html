@@ -2823,6 +2823,7 @@ function handleSignup() {
   // Add to global challengers list
   const newChallenger = {
     name: state.user.name, username: un, joinedDate: new Date().toLocaleDateString('en-PH'), track: state.track,
+    exams: [], topics: {},
     days: 0, hrs: 0, streak: 0, color,
     badges: ['🌱'], title: 'Seedling Scholar',
     score: 0, subjects: {pa:0, dp:0, io:0, ab:0},
@@ -3081,15 +3082,17 @@ function submitLog() {
   const challengers = getChallengers();
   const idx = challengers.findIndex(c=>c.username.toLowerCase()===state.user.username.toLowerCase());
   if (idx > -1) {
-    challengers[idx].hrs     = state.user.totalHrs;
-    challengers[idx].streak  = state.user.streak;
-    challengers[idx].days    = log.status==='done' ? challengers[idx].days+1 : challengers[idx].days;
-    challengers[idx].score   = Math.round(state.user.avgScore||0);
-    challengers[idx].subjects= state.user.subjects;
-    // Compute title and badge
-    challengers[idx].title   = getTitleForDays(challengers[idx].days);
-    challengers[idx].badges  = computeBadges(challengers[idx]);
+    challengers[idx].hrs      = state.user.totalHrs;
+    challengers[idx].streak   = state.user.streak;
+    challengers[idx].days     = log.status==='done' ? challengers[idx].days+1 : challengers[idx].days;
+    challengers[idx].score    = Math.round(state.user.avgScore||0);
+    challengers[idx].subjects = state.user.subjects;
+    challengers[idx].title    = getTitleForDays(challengers[idx].days);
+    challengers[idx].badges   = computeBadges(challengers[idx]);
     challengers[idx].lastSeen = new Date().toLocaleDateString('en-PH');
+    // Embed exams + topic state so other users can see them without localStorage access
+    challengers[idx].exams    = state.exams || [];
+    challengers[idx].topics   = JSON.parse(localStorage.getItem('pmle_topics_' + state.user.username.toLowerCase()) || '{}');
     saveChallengers(challengers); // syncs to shared cloud
   }
 
@@ -3327,11 +3330,16 @@ function toggleTopic(subjectId, topicIdx) {
   if (!state.user) { toast('Log in to track topics.', 'warning'); return; }
   const ts = getTopicState();
   const key = subjectId + '_' + topicIdx;
-  // Cycle: todo → done → crossed → todo
   const cur = ts[key] || 'todo';
   ts[key] = cur === 'todo' ? 'done' : cur === 'done' ? 'crossed' : 'todo';
   saveTopicState(ts);
   renderSubjectProgress();
+  // Push updated topics to shared cloud so others see it
+  const challengers = getChallengers();
+  if (state.user) {
+    const idx = challengers.findIndex(c => c.username.toLowerCase() === state.user.username.toLowerCase());
+    if (idx > -1) { challengers[idx].topics = ts; saveChallengers(challengers); }
+  }
 }
 
 function renderSubjectProgress() {
@@ -3442,7 +3450,11 @@ function addExamResult() {
   const challengers = getChallengers();
   if (state.user) {
     const idx = challengers.findIndex(c => c.username.toLowerCase() === state.user.username.toLowerCase());
-    if (idx > -1) { challengers[idx].lastExam = score; saveChallengers(challengers); }
+    if (idx > -1) {
+      challengers[idx].lastExam = score;
+      challengers[idx].exams = state.exams || [];
+      saveChallengers(challengers);
+    }
   }
   renderExamTable();
   renderExamStats();
@@ -3788,13 +3800,12 @@ function renderCommunity() {
   }
 
   el.innerHTML=data.map((r,ri)=>{
-    // Load per-user exams for public exam history
-    const userExams = JSON.parse(localStorage.getItem('pmle_exams_' + r.username.toLowerCase()) || '[]');
+    // Read from embedded cloud data (works for all users, not just self)
+    const userExams = r.exams || JSON.parse(localStorage.getItem('pmle_exams_' + r.username.toLowerCase()) || '[]');
     const lastExam = userExams.length ? userExams[userExams.length-1] : null;
     const avgExam = userExams.length ? (userExams.reduce((a,e)=>a+e.score,0)/userExams.length).toFixed(0) : null;
 
-    // Load per-user topic state for progress
-    const ts = JSON.parse(localStorage.getItem('pmle_topics_' + r.username.toLowerCase()) || '{}');
+    const ts = r.topics || JSON.parse(localStorage.getItem('pmle_topics_' + r.username.toLowerCase()) || '{}');
     const topicsDone = Object.values(ts).filter(v=>v==='done').length;
     const topicsTotal = SUBJECTS.reduce((a,s)=>a+s.topics.length, 0);
 
@@ -4825,6 +4836,14 @@ async function fetchCloudChallengers() {
     const data = await res.json();
     const list = Array.isArray(data) ? data : (data.challengers || []);
     localStorage.setItem('pmle_challengers', JSON.stringify(list));
+    // Also restore current user's own data from cloud record if available
+    if (state.user) {
+      const me = list.find(c => c.username.toLowerCase() === state.user.username.toLowerCase());
+      if (me) {
+        if (me.exams) localStorage.setItem('pmle_exams_' + me.username.toLowerCase(), JSON.stringify(me.exams));
+        if (me.topics) localStorage.setItem('pmle_topics_' + me.username.toLowerCase(), JSON.stringify(me.topics));
+      }
+    }
     hideCloudBanner();
     return list;
   } catch(e) {
@@ -4902,6 +4921,8 @@ function loadCloudSettings() {
   const apiKey = localStorage.getItem('pmle_jsonbin_key') || '';
   if (binId)  { window.PMLE_BIN_ID  = binId;  const el = document.getElementById('settingBinId');  if(el) el.value = binId; }
   if (apiKey) { window.PMLE_API_KEY = apiKey; const el = document.getElementById('settingApiKey'); if(el) el.value = apiKey; }
+  // Hide banner immediately if credentials are already saved
+  if (binId && apiKey) hideCloudBanner();
 }
 
 function showCloudBanner() {
