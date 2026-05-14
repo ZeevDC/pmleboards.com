@@ -4851,8 +4851,9 @@ function updateParticipantCount() {
 // never reaches the client.
 // ═══════════════════════════════════════════════
 
-// ── CONFIG: Worker URL stored in localStorage / set via Admin panel ──
-let WORKER_URL = localStorage.getItem('pmle_worker_url') || '';
+// ── CONFIG: Hardcoded Worker URL — sync works for all users automatically ──
+const WORKER_URL_DEFAULT = 'https://pmle-proxy.niszelmariedizondelacruz.workers.dev';
+let WORKER_URL = localStorage.getItem('pmle_worker_url') || WORKER_URL_DEFAULT;
 
 function getChallengers() {
   return JSON.parse(localStorage.getItem('pmle_challengers') || '[]');
@@ -5102,13 +5103,12 @@ function loadCloudSettings() {
     localStorage.removeItem('pmle_gist_id');
     localStorage.removeItem('pmle_gist_token');
   }
-  const url = localStorage.getItem('pmle_worker_url') || '';
-  if (url) {
-    WORKER_URL = url;
-    const el = document.getElementById('settingWorkerUrl');
-    if (el) el.value = url;
-    hideCloudBanner();
-  }
+  // Always use hardcoded default if no override saved
+  const url = localStorage.getItem('pmle_worker_url') || WORKER_URL_DEFAULT;
+  WORKER_URL = url;
+  const el = document.getElementById('settingWorkerUrl');
+  if (el) el.value = url;
+  hideCloudBanner();
 }
 
 function showCloudBanner() {
