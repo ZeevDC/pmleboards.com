@@ -1470,6 +1470,15 @@ footer .f-copy { font-size: 0.78rem; color: rgba(255,255,255,0.4); margin-top: 1
   .ai-app-desc { white-space: normal; }
 }
 
+@keyframes syncPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.75); }
+}
+.sync-dot-live    { background: var(--matcha) !important; animation: none; }
+.sync-dot-syncing { background: var(--gold) !important; animation: syncPulse 0.9s ease-in-out infinite; }
+.sync-dot-offline { background: var(--strawberry) !important; animation: none; }
+.sync-dot-error   { background: var(--strawberry-light) !important; animation: none; }
+
 </style>
 </head>
 <body>
@@ -1477,7 +1486,7 @@ footer .f-copy { font-size: 0.78rem; color: rgba(255,255,255,0.4); margin-top: 1
 <!-- ── CLOUD SETUP BANNER ── -->
 <div id="cloudSetupBanner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#fff3cd;border-top:2px solid #ffc107;padding:12px 20px;align-items:center;gap:12px;font-size:0.85rem;color:#856404;box-shadow:0 -4px 20px rgba(0,0,0,0.1)">
   <span style="font-size:1.2rem">☁️</span>
-  <div style="flex:1"><strong>Cloud sync not configured.</strong> Participants only see their own data. Go to <strong>Admin → Cloud Sync Setup</strong> to connect JSONBin and enable real-time sharing.</div>
+  <div style="flex:1"><strong>Cloud sync not configured.</strong> Participants only see their own data. Go to <strong>Admin → Cloud Sync Setup</strong> to connect a GitHub Gist and enable real-time sharing.</div>
   <a href="#admin" onclick="document.getElementById('cloudSetupBanner').style.display='none'" style="background:#ffc107;color:#212529;padding:6px 14px;border-radius:20px;font-weight:700;text-decoration:none;font-size:0.8rem;white-space:nowrap">Set Up Now →</a>
   <button onclick="document.getElementById('cloudSetupBanner').style.display='none'" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:#856404;padding:0 4px">✕</button>
 </div>
@@ -1505,6 +1514,10 @@ footer .f-copy { font-size: 0.78rem; color: rgba(255,255,255,0.4); margin-top: 1
   </ul>
   <div class="nav-user">
     <button id="navLoginBtn" onclick="openLoginModal()" style="display:none;background:var(--matcha);color:white;border:none;border-radius:20px;padding:7px 16px;font-size:0.8rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">🔑 Log In</button>
+    <div id="syncIndicator" title="Cloud sync status" style="display:none;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:0.7rem;font-weight:600;cursor:default;transition:all 0.3s;background:var(--matcha-pale);color:var(--matcha)">
+      <span id="syncDot" style="width:7px;height:7px;border-radius:50%;background:var(--matcha);display:inline-block;flex-shrink:0"></span>
+      <span id="syncLabel">Live</span>
+    </div>
     <div class="user-avatar" id="userAvatarNav" onclick="openUserMenu()">?</div>
     <button class="hamburger-btn" id="hamburgerBtn" onclick="toggleMobileMenu()" aria-label="Open menu">
       <span></span><span></span><span></span>
@@ -2577,22 +2590,24 @@ footer .f-copy { font-size: 0.78rem; color: rgba(255,255,255,0.4); margin-top: 1
           </div>
         </div>
         <div class="admin-card" style="border:2px solid var(--matcha-light)">
-          <h4>☁️ Cloud Sync Setup</h4>
-          <p>Connect JSONBin.io so all participants see each other in real time. <a href="https://jsonbin.io" target="_blank" style="color:var(--matcha)">Create a free account →</a></p>
+          <h4>☁️ Cloud Sync Setup <span style="font-size:0.72rem;color:var(--text-light);font-weight:400">(GitHub Gist)</span></h4>
+          <p>Connect a GitHub Gist so all participants see each other in real time. Uses your existing GitHub account — free, no extra sign-up needed.</p>
           <ol style="font-size:0.82rem;color:var(--text-mid);line-height:1.8;padding-left:1.2rem;margin-bottom:1rem">
-            <li>Sign up free at <strong>jsonbin.io</strong></li>
-            <li>Click <strong>Create Bin</strong>, paste <code style="background:var(--cream-dark);padding:1px 5px;border-radius:4px">[]</code> as content, save</li>
-            <li>Copy the <strong>BIN ID</strong> from the URL</li>
-            <li>Go to <strong>API Keys</strong> and copy your <strong>Master Key</strong></li>
+            <li>Go to <a href="https://github.com/settings/tokens/new" target="_blank" style="color:var(--matcha)">github.com/settings/tokens/new</a></li>
+            <li>Name it <strong>pmleboards</strong>, set expiration to <strong>No expiration</strong></li>
+            <li>Under <strong>Scopes</strong>, check only <code style="background:var(--cream-dark);padding:1px 5px;border-radius:4px">gist</code></li>
+            <li>Click <strong>Generate token</strong> and copy it</li>
+            <li>Go to <a href="https://gist.github.com" target="_blank" style="color:var(--matcha)">gist.github.com</a>, create a <strong>Public Gist</strong> with filename <code style="background:var(--cream-dark);padding:1px 5px;border-radius:4px">pmle_challengers.json</code> and content <code style="background:var(--cream-dark);padding:1px 5px;border-radius:4px">[]</code></li>
+            <li>Copy the <strong>Gist ID</strong> from the URL (the long hash at the end)</li>
             <li>Paste both below and click Save</li>
           </ol>
           <div class="form-group" style="margin-bottom:0.75rem">
-            <label>JSONBin Bin ID</label>
-            <input type="text" id="settingBinId" placeholder="664abc123def..." style="font-family:monospace">
+            <label>GitHub Gist ID</label>
+            <input type="text" id="settingBinId" placeholder="a1b2c3d4e5f6..." style="font-family:monospace">
           </div>
           <div class="form-group" style="margin-bottom:0.75rem">
-            <label>JSONBin Master Key</label>
-            <input type="password" id="settingApiKey" placeholder="$2a$10$..." style="font-family:monospace">
+            <label>GitHub Personal Access Token</label>
+            <input type="password" id="settingApiKey" placeholder="ghp_xxxxxxxxxxxx" style="font-family:monospace">
           </div>
           <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
             <button class="btn btn-primary" onclick="saveCloudSettings()">💾 Save & Test Connection</button>
@@ -3022,11 +3037,12 @@ function setStatus(s, el) {
 }
 function toggleType(el, t) { el.classList.toggle('active'); }
 function updateHrsTotal() {
-  const ids = ['hrs_pa','hrs_dp','hrs_io','hrs_ab'];
   let total = 0;
-  ids.forEach(id => { const v = parseFloat(document.getElementById(id).value)||0; total+=v; });
+  document.querySelectorAll('.subject-hrs input[type="number"]').forEach(input => {
+    total += parseFloat(input.value) || 0;
+  });
   document.getElementById('totalHrsDisplay').textContent = total.toFixed(1);
-  const [min,max] = state.track.split('-').map(Number);
+  const [min,max] = (state.track||'6-8').split('-').map(Number);
   const ind = document.getElementById('hrsStatusIndicator');
   if (total >= min) ind.textContent = '✅';
   else if (total > 0) ind.textContent = '⚠️';
@@ -3036,12 +3052,16 @@ function submitLog() {
   if (!state.user) { toast('Please sign up first to log your session!','error'); return; }
   const total = parseFloat(document.getElementById('totalHrsDisplay').textContent)||0;
   if (!state.currentStatus && total === 0) { toast('Please select a status or enter hours studied.','error'); return; }
-  const subjects = {
-    pa: parseFloat(document.getElementById('hrs_pa').value)||0,
-    dp: parseFloat(document.getElementById('hrs_dp').value)||0,
-    io: parseFloat(document.getElementById('hrs_io').value)||0,
-    ab: parseFloat(document.getElementById('hrs_ab').value)||0,
-  };
+
+  // Collect subject hours dynamically from all rendered subject rows
+  const subjects = { pa:0, dp:0, io:0, ab:0 };
+  document.querySelectorAll('.subject-hrs input[type="number"]').forEach(input => {
+    // Extract subject id from element id (e.g. "hrs_pa" -> "pa")
+    if (input.id && input.id.startsWith('hrs_')) {
+      const sid = input.id.replace('hrs_', '');
+      subjects[sid] = (subjects[sid] || 0) + (parseFloat(input.value) || 0);
+    }
+  });
   const log = {
     day: state.currentDay, date: (state.logDate || new Date()).toISOString(),
     status: state.currentStatus || (total>0?'done':'mia'),
@@ -3126,7 +3146,7 @@ function computeBadges(c) {
   return [...new Set(b)];
 }
 function clearLog() {
-  ['hrs_pa','hrs_dp','hrs_io','hrs_ab'].forEach(id=>{ document.getElementById(id).value=''; });
+  document.querySelectorAll('.subject-hrs input[type="number"]').forEach(input => { input.value = ''; });
   document.getElementById('logReflection').value='';
   document.getElementById('logPracticeScore').value='';
   document.getElementById('totalHrsDisplay').textContent='0.0';
@@ -4755,6 +4775,12 @@ function confirmAdminDelete(username) {
 // INIT
 // ═══════════════════════════════════════════════
 function init() {
+  // ── Migrate old JSONBin credentials to new Gist keys (one-time) ──
+  if (!localStorage.getItem('pmle_gist_id') && localStorage.getItem('pmle_jsonbin_id')) {
+    // Old keys present but no new ones — nothing to migrate (different service)
+    localStorage.removeItem('pmle_jsonbin_id');
+    localStorage.removeItem('pmle_jsonbin_key');
+  }
   // Load persisted data — prefer per-user keys if a session exists
   state.user  = JSON.parse(localStorage.getItem('pmle_user')  || 'null');
   if (state.user) {
@@ -4771,11 +4797,11 @@ function init() {
   updateParticipantCount();
   initLog();
   renderPomoDots();
-  // Load saved JSONBin credentials and pull latest shared challengers
+  // Load saved GitHub Gist credentials and pull latest shared challengers
   loadCloudSettings();
   refreshFromCloud();
-  // Poll every 30s so new sign-ups appear without page reload
-  setInterval(refreshFromCloud, 30000);
+  // Start adaptive real-time sync engine
+  startSyncEngine();
   // Apply any saved log customizations
   const savedCustom = localStorage.getItem('pmle_custom_subjects');
   if (savedCustom) applyCustomLog(JSON.parse(savedCustom));
@@ -4808,70 +4834,93 @@ function updateParticipantCount() {
   document.getElementById('statActive').textContent = activeToday;
 }
 // ═══════════════════════════════════════════════
-// CLOUD SYNC — JSONBin.io shared store
-// All users read/write the same bin → real-time
+// CLOUD SYNC — GitHub Gist shared store
+// All users read/write the same public gist → real-time
 // ═══════════════════════════════════════════════
 
-// ── CONFIG: hardcoded credentials — works on all devices ──
-const JSONBIN_BIN_ID  = '6a05377d250b1311c3495d5d';
-const JSONBIN_API_KEY = '$2a$10$POB3GsbV6Y/gbovS8hEq9OEFO4gcxxugVGncJuo9BYC0qpUSnPwcG';
-// ─────────────────────────────────────────────────
-
-const JSONBIN_BASE = 'https://api.jsonbin.io/v3/b';
+// ── CONFIG: loaded from localStorage on init ──
+let GIST_ID    = localStorage.getItem('pmle_gist_id')    || '';
+let GIST_TOKEN = localStorage.getItem('pmle_gist_token') || '';
+const GIST_FILENAME = 'pmle_challengers.json';
+const GIST_BASE     = 'https://api.github.com/gists';
 
 function getChallengers() {
   return JSON.parse(localStorage.getItem('pmle_challengers') || '[]');
 }
 
 async function fetchCloudChallengers() {
-  if (!JSONBIN_BIN_ID || !JSONBIN_API_KEY) {
+  if (!GIST_ID || !GIST_TOKEN) {
     showCloudBanner();
     return getChallengers();
   }
   try {
-    const res = await fetch(`${JSONBIN_BASE}/${JSONBIN_BIN_ID}/latest`, {
-      headers: { 'X-Master-Key': JSONBIN_API_KEY, 'X-Bin-Meta': 'false' }
+    // Use cache-busting to avoid stale GitHub CDN responses
+    const res = await fetch(`${GIST_BASE}/${GIST_ID}?t=${Date.now()}`, {
+      headers: {
+        'Authorization': `token ${GIST_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Cache-Control': 'no-cache'
+      }
     });
-    if (!res.ok) throw new Error(res.status);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
-    const list = Array.isArray(data) ? data : (data.challengers || []);
+    const raw = data.files?.[GIST_FILENAME]?.content || '[]';
+    const list = JSON.parse(raw);
+    if (!Array.isArray(list)) throw new Error('Unexpected data format');
     localStorage.setItem('pmle_challengers', JSON.stringify(list));
-    // Also restore current user's own data from cloud record if available
+    // Restore current user's own data from cloud record if available
     if (state.user) {
       const me = list.find(c => c.username.toLowerCase() === state.user.username.toLowerCase());
       if (me) {
-        if (me.exams) localStorage.setItem('pmle_exams_' + me.username.toLowerCase(), JSON.stringify(me.exams));
+        if (me.exams)  localStorage.setItem('pmle_exams_'  + me.username.toLowerCase(), JSON.stringify(me.exams));
         if (me.topics) localStorage.setItem('pmle_topics_' + me.username.toLowerCase(), JSON.stringify(me.topics));
       }
     }
     hideCloudBanner();
     return list;
   } catch(e) {
-    console.warn('JSONBin fetch failed, using local cache:', e);
+    console.warn('GitHub Gist fetch failed, using local cache:', e);
     return getChallengers();
   }
 }
 
+// Write queue so rapid calls don't send conflicting PATCHes
+let _saveQueue = null;
+let _saveTimer = null;
 async function saveChallengersCloud(list) {
   localStorage.setItem('pmle_challengers', JSON.stringify(list));
-  if (!JSONBIN_BIN_ID || !JSONBIN_API_KEY) return;
-  try {
-    await fetch(`${JSONBIN_BASE}/${JSONBIN_BIN_ID}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Master-Key': JSONBIN_API_KEY,
-        'X-Bin-Versioning': 'false'
-      },
-      body: JSON.stringify(list)
-    });
-  } catch(e) {
-    console.warn('JSONBin save failed, data saved locally only:', e);
-  }
+  if (!GIST_ID || !GIST_TOKEN) return;
+  _saveQueue = list;
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(async () => {
+    const toSave = _saveQueue;
+    _saveQueue = null;
+    try {
+      const res = await fetch(`${GIST_BASE}/${GIST_ID}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `token ${GIST_TOKEN}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          files: { [GIST_FILENAME]: { content: JSON.stringify(toSave, null, 2) } }
+        })
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        console.warn('Gist save failed:', res.status, err.message || '');
+      } else {
+        syncAfterWrite(); // fast re-fetch so writer sees their own update immediately
+      }
+    } catch(e) {
+      console.warn('Gist save error, data saved locally only:', e);
+    }
+  }, 800); // debounce — batch writes within 800ms
 }
 
 function saveChallengers(list) {
-  saveChallengersCloud(list); // fire-and-forget
+  saveChallengersCloud(list); // fire-and-forget with debounce
 }
 
 async function refreshFromCloud() {
@@ -4882,47 +4931,210 @@ async function refreshFromCloud() {
   return list;
 }
 
+// ═══════════════════════════════════════════════
+// ADAPTIVE REAL-TIME SYNC ENGINE
+// • Active tab  → poll every 5 s
+// • Background  → poll every 60 s
+// • Offline     → pause, resume on reconnect
+// • After write → immediate re-fetch after 2 s
+// ═══════════════════════════════════════════════
+const SYNC = {
+  intervalActive:     5_000,   // 5 s when tab is visible
+  intervalBackground: 60_000,  // 60 s when hidden
+  postWriteDelay:     2_000,   // re-fetch 2 s after a write completes
+  _timer:    null,
+  _lastHash: null,              // detect actual data changes
+  _online:   navigator.onLine,
+};
+
+function setSyncStatus(state) {
+  // state: 'live' | 'syncing' | 'offline' | 'error' | 'hidden'
+  const indicator = document.getElementById('syncIndicator');
+  const dot       = document.getElementById('syncDot');
+  const label     = document.getElementById('syncLabel');
+  if (!indicator) return;
+
+  if (!GIST_ID || !GIST_TOKEN) { indicator.style.display = 'none'; return; }
+  indicator.style.display = 'flex';
+
+  dot.className = ''; // clear
+  switch (state) {
+    case 'syncing':
+      dot.classList.add('sync-dot-syncing');
+      label.textContent = 'Syncing…';
+      indicator.style.background = '#fff8e6';
+      indicator.style.color      = '#7a5c10';
+      break;
+    case 'offline':
+      dot.classList.add('sync-dot-offline');
+      label.textContent = 'Offline';
+      indicator.style.background = 'var(--strawberry-pale)';
+      indicator.style.color      = 'var(--strawberry)';
+      break;
+    case 'error':
+      dot.classList.add('sync-dot-error');
+      label.textContent = 'Sync error';
+      indicator.style.background = 'var(--strawberry-pale)';
+      indicator.style.color      = 'var(--strawberry)';
+      break;
+    default: // 'live'
+      dot.classList.add('sync-dot-live');
+      label.textContent = 'Live';
+      indicator.style.background = 'var(--matcha-pale)';
+      indicator.style.color      = 'var(--matcha)';
+  }
+}
+
+async function syncTick() {
+  if (!GIST_ID || !GIST_TOKEN) return;
+  if (!SYNC._online) { setSyncStatus('offline'); return; }
+
+  setSyncStatus('syncing');
+  try {
+    const res = await fetch(`${GIST_BASE}/${GIST_ID}?t=${Date.now()}`, {
+      headers: {
+        'Authorization': `token ${GIST_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Cache-Control': 'no-cache'
+      }
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    const raw  = data.files?.[GIST_FILENAME]?.content || '[]';
+
+    // Only re-render if data actually changed
+    if (raw !== SYNC._lastHash) {
+      SYNC._lastHash = raw;
+      const list = JSON.parse(raw);
+      if (Array.isArray(list)) {
+        localStorage.setItem('pmle_challengers', JSON.stringify(list));
+        // Restore current user's fresh data
+        if (state.user) {
+          const me = list.find(c => c.username.toLowerCase() === state.user.username.toLowerCase());
+          if (me) {
+            if (me.exams)  localStorage.setItem('pmle_exams_'  + me.username.toLowerCase(), JSON.stringify(me.exams));
+            if (me.topics) localStorage.setItem('pmle_topics_' + me.username.toLowerCase(), JSON.stringify(me.topics));
+          }
+        }
+        renderLeaderboard();
+        renderCommunity();
+        updateParticipantCount();
+      }
+    }
+    setSyncStatus('live');
+  } catch(e) {
+    console.warn('Sync tick failed:', e);
+    setSyncStatus('error');
+  }
+}
+
+function scheduleSyncTick() {
+  clearTimeout(SYNC._timer);
+  const interval = document.hidden ? SYNC.intervalBackground : SYNC.intervalActive;
+  SYNC._timer = setTimeout(async () => {
+    await syncTick();
+    scheduleSyncTick(); // reschedule after each tick
+  }, interval);
+}
+
+// Call this after any write to get a fast re-fetch
+function syncAfterWrite() {
+  clearTimeout(SYNC._timer);
+  SYNC._timer = setTimeout(async () => {
+    await syncTick();
+    scheduleSyncTick();
+  }, SYNC.postWriteDelay);
+}
+
+function startSyncEngine() {
+  if (SYNC._started) { scheduleSyncTick(); setSyncStatus(GIST_ID && GIST_TOKEN ? 'live' : 'hidden'); return; }
+  SYNC._started = true;
+  setSyncStatus(GIST_ID && GIST_TOKEN ? 'live' : 'hidden');
+
+  // Tab visibility — speed up when user comes back
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      // Tab just became visible — sync immediately then reschedule
+      syncTick().then(scheduleSyncTick);
+    } else {
+      scheduleSyncTick(); // switch to slow interval
+    }
+  });
+
+  // Online / offline
+  window.addEventListener('online',  () => { SYNC._online = true;  setSyncStatus('live');    syncTick().then(scheduleSyncTick); });
+  window.addEventListener('offline', () => { SYNC._online = false; setSyncStatus('offline'); });
+
+  // Start the first tick
+  scheduleSyncTick();
+}
+
 async function saveCloudSettings() {
-  const binId  = document.getElementById('settingBinId').value.trim();
-  const apiKey = document.getElementById('settingApiKey').value.trim();
-  if (!binId || !apiKey) { toast('Please enter both Bin ID and API Key.', 'error'); return; }
-  localStorage.setItem('pmle_jsonbin_id',  binId);
-  localStorage.setItem('pmle_jsonbin_key', apiKey);
-  window.PMLE_BIN_ID  = binId;
-  window.PMLE_API_KEY = apiKey;
+  const gistId    = document.getElementById('settingBinId').value.trim();
+  const gistToken = document.getElementById('settingApiKey').value.trim();
+  if (!gistId || !gistToken) { toast('Please enter both Gist ID and GitHub Token.', 'error'); return; }
+  localStorage.setItem('pmle_gist_id',    gistId);
+  localStorage.setItem('pmle_gist_token', gistToken);
+  GIST_ID    = gistId;
+  GIST_TOKEN = gistToken;
   await testCloudConnection();
 }
 
 async function testCloudConnection() {
-  const binId  = (document.getElementById('settingBinId')?.value.trim())  || localStorage.getItem('pmle_jsonbin_id')  || '';
-  const apiKey = (document.getElementById('settingApiKey')?.value.trim()) || localStorage.getItem('pmle_jsonbin_key') || '';
+  const gistId    = document.getElementById('settingBinId')?.value.trim()  || localStorage.getItem('pmle_gist_id')    || '';
+  const gistToken = document.getElementById('settingApiKey')?.value.trim() || localStorage.getItem('pmle_gist_token') || '';
   const result = document.getElementById('cloudTestResult');
-  if (!binId || !apiKey) { if(result) result.innerHTML='<span style="color:var(--strawberry)">⚠️ Enter credentials first.</span>'; return; }
-  if(result) result.innerHTML = '⏳ Testing...';
+  if (!gistId || !gistToken) {
+    if (result) result.innerHTML = '<span style="color:var(--strawberry)">⚠️ Enter credentials first.</span>';
+    return;
+  }
+  if (result) result.innerHTML = '⏳ Testing connection…';
   try {
-    const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
-      headers: { 'X-Master-Key': apiKey, 'X-Bin-Meta': 'false' }
+    const res = await fetch(`${GIST_BASE}/${gistId}`, {
+      headers: {
+        'Authorization': `token ${gistToken}`,
+        'Accept': 'application/vnd.github.v3+json'
+      }
     });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
+    if (!res.ok) throw new Error('HTTP ' + res.status + (res.status === 401 ? ' (invalid token)' : res.status === 404 ? ' (gist not found)' : ''));
     const data = await res.json();
-    const count = Array.isArray(data) ? data.length : 0;
-    if(result) result.innerHTML = `<span style="color:var(--matcha)">✅ Connected! ${count} challenger(s) in bin.</span>`;
+    if (!data.files?.[GIST_FILENAME]) {
+      // File missing — create it now
+      await fetch(`${GIST_BASE}/${gistId}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `token ${gistToken}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ files: { [GIST_FILENAME]: { content: '[]' } } })
+      });
+      if (result) result.innerHTML = `<span style="color:var(--matcha)">✅ Connected! Created ${GIST_FILENAME} in your Gist.</span>`;
+    } else {
+      const raw  = data.files[GIST_FILENAME].content || '[]';
+      const list = JSON.parse(raw);
+      const count = Array.isArray(list) ? list.length : 0;
+      if (result) result.innerHTML = `<span style="color:var(--matcha)">✅ Connected! ${count} challenger(s) synced.</span>`;
+    }
+    GIST_ID    = gistId;
+    GIST_TOKEN = gistToken;
     hideCloudBanner();
-    toast('Cloud sync connected! All users will now see each other. 🎉', 'success');
+    setSyncStatus('live');
+    startSyncEngine();
+    toast('Cloud sync connected via GitHub Gist! 🎉', 'success');
     refreshFromCloud();
   } catch(e) {
-    if(result) result.innerHTML = `<span style="color:var(--strawberry)">❌ Failed: ${e.message}. Check your Bin ID and API Key.</span>`;
+    if (result) result.innerHTML = `<span style="color:var(--strawberry)">❌ Failed: ${e.message}. Check your Gist ID and token (needs "gist" scope).</span>`;
     toast('Connection failed. Double-check your credentials.', 'error');
   }
 }
 
 function loadCloudSettings() {
-  const binId  = localStorage.getItem('pmle_jsonbin_id')  || '';
-  const apiKey = localStorage.getItem('pmle_jsonbin_key') || '';
-  if (binId)  { window.PMLE_BIN_ID  = binId;  const el = document.getElementById('settingBinId');  if(el) el.value = binId; }
-  if (apiKey) { window.PMLE_API_KEY = apiKey; const el = document.getElementById('settingApiKey'); if(el) el.value = apiKey; }
-  // Hide banner immediately if credentials are already saved
-  if (binId && apiKey) hideCloudBanner();
+  const gistId    = localStorage.getItem('pmle_gist_id')    || '';
+  const gistToken = localStorage.getItem('pmle_gist_token') || '';
+  if (gistId)    { GIST_ID    = gistId;    const el = document.getElementById('settingBinId');  if (el) el.value = gistId; }
+  if (gistToken) { GIST_TOKEN = gistToken; const el = document.getElementById('settingApiKey'); if (el) el.value = gistToken; }
+  if (gistId && gistToken) hideCloudBanner();
 }
 
 function showCloudBanner() {
@@ -5018,10 +5230,11 @@ function closeMobileMenu() {
   document.body.style.overflow = '';
 }
 
-document.addEventListener('DOMContentLoaded', init);
-
-// Close modal on overlay click
-document.getElementById('modalOverlay').addEventListener('click', function(e){ if(e.target===this) closeModal(); });
+document.addEventListener('DOMContentLoaded', function() {
+  init();
+  // Close modal on overlay click
+  document.getElementById('modalOverlay').addEventListener('click', function(e){ if(e.target===this) closeModal(); });
+});
 </script>
 </body>
 </html>
