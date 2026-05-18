@@ -2698,16 +2698,62 @@ body {
   --shadow-red: 0 4px 24px rgba(224,122,149,0.14);
 }
 
+/* ── THEME: Winter ── */
+[data-theme="winter"] {
+  --matcha: #93A4C1;
+  --matcha-light: #B1B2AE;
+  --matcha-pale: #D3DFF2;
+  --matcha-foam: #f0f4fb;
+  --strawberry: #7a8fa8;
+  --strawberry-light: #93A4C1;
+  --strawberry-pale: #e8edf5;
+  --cream: #f5f6f8;
+  --cream-dark: #E7E8E4;
+  --brown: #4a5568;
+  --brown-light: #718096;
+  --gold: #B1B2AE;
+  --text-dark: #18202B;
+  --text-mid: #2d3748;
+  --text-light: #718096;
+  --shadow: 0 4px 24px rgba(24,32,43,0.13);
+  --shadow-red: 0 4px 24px rgba(147,164,193,0.13);
+}
+
+/* ── THEME: Red Blush ── */
+[data-theme="redblush"] {
+  --matcha: #9E182B;
+  --matcha-light: #F2AFBC;
+  --matcha-pale: #F9CBD6;
+  --matcha-foam: #fef4f6;
+  --strawberry: #c9748f;
+  --strawberry-light: #F9CBD6;
+  --strawberry-pale: #fde8ef;
+  --cream: #fdf8f5;
+  --cream-dark: #F2E0D2;
+  --brown: #7a0f20;
+  --brown-light: #b83048;
+  --gold: #F2AFBC;
+  --text-dark: #3a0a12;
+  --text-mid: #7a2035;
+  --text-light: #b07080;
+  --shadow: 0 4px 24px rgba(158,24,43,0.13);
+  --shadow-red: 0 4px 24px rgba(242,175,188,0.13);
+}
+
 /* ── NAV background per theme ── */
 :root                   { --nav-bg: rgba(255,210,180,0.97); }
 [data-theme="lilac"]    { --nav-bg: rgba(237,225,255,0.97); }
 [data-theme="coquette"] { --nav-bg: rgba(255,240,245,0.97); }
+[data-theme="redblush"]  { --nav-bg: rgba(249,203,214,0.97); }
+[data-theme="winter"]   { --nav-bg: rgba(211,223,242,0.97); }
 nav { background: var(--nav-bg) !important; }
 
 /* ── MOTIVATION gradient per theme ── */
 :root                   { --motive-grad: linear-gradient(135deg, #5a7a4a, #3d5c30); }
 [data-theme="lilac"]    { --motive-grad: linear-gradient(135deg, #7c5cbf, #4a2d90); }
 [data-theme="coquette"] { --motive-grad: linear-gradient(135deg, #a05570, #c9748f); }
+[data-theme="redblush"]  { --motive-grad: linear-gradient(135deg, #9E182B, #c9748f); }
+[data-theme="winter"]   { --motive-grad: linear-gradient(135deg, #18202B, #93A4C1); }
 #motivation { background: var(--motive-grad) !important; color: white; }
 
 /* ── HEATMAP per theme ── */
@@ -2715,6 +2761,8 @@ nav { background: var(--nav-bg) !important; }
 :root { --heat1:#c8e6b4; --heat2:#8aad6e; --heat3:#5a7a4a; --heat4:#3d5c30; }
 [data-theme="lilac"]    { --heat1:#dcc8f7; --heat2:#b899ec; --heat3:#9067d4; --heat4:#6844b8; }
 [data-theme="coquette"] { --heat1:#fadadd; --heat2:#e8a0b4; --heat3:#c9748f; --heat4:#a05570; }
+[data-theme="redblush"]  { --heat1:#F9CBD6; --heat2:#F2AFBC; --heat3:#c9748f; --heat4:#9E182B; }
+[data-theme="winter"]   { --heat1:#D3DFF2; --heat2:#93A4C1; --heat3:#4a5568; --heat4:#18202B; }
 .heat-1 { background: var(--heat1) !important; }
 .heat-2 { background: var(--heat2) !important; }
 .heat-3 { background: var(--heat3) !important; }
@@ -2733,6 +2781,8 @@ nav { background: var(--nav-bg) !important; }
 
 /* ── Matcha leaf accent ── */
 :root .hero-badge::before { content: '🍵 '; }
+[data-theme="redblush"] .hero-badge::before { content: '🍒 '; }
+[data-theme="winter"] .hero-badge::before { content: '❄️ '; }
 [data-theme="lilac"] .hero-badge::before { content: '✨ '; }
 
 /* ════════════════════════════════════
@@ -3096,6 +3146,16 @@ nav { background: var(--nav-bg) !important; }
         <button class="nav-theme-opt" data-theme="coquette" onclick="applyTheme('coquette',this);closeMobileMenu();" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:12px;border:2px solid transparent;background:transparent;width:100%;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s;">
           <span style="width:28px;height:28px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#c9748f 50%,#e8a0b4 50%);display:inline-block;box-shadow:0 2px 6px rgba(0,0,0,0.15);"></span>
           <span style="display:flex;flex-direction:column;text-align:left;flex:1;"><span style="font-size:0.85rem;font-weight:700;color:var(--text-dark);">Pastel Pink Coquette</span><span style="font-size:0.7rem;color:var(--text-light);">Blush &amp; ribbon 🎀</span></span>
+          <span class="nav-tc" style="font-size:1rem;color:var(--matcha);opacity:0;">✓</span>
+        </button>
+        <button class="nav-theme-opt" data-theme="winter" onclick="applyTheme('winter',this);closeMobileMenu();" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:12px;border:2px solid transparent;background:transparent;width:100%;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s;">
+          <span style="width:28px;height:28px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#18202B 50%,#93A4C1 50%);display:inline-block;box-shadow:0 2px 6px rgba(0,0,0,0.15);"></span>
+          <span style="display:flex;flex-direction:column;text-align:left;flex:1;"><span style="font-size:0.85rem;font-weight:700;color:var(--text-dark);">Winter</span><span style="font-size:0.7rem;color:var(--text-light);">Icy blue &amp; midnight ❄️</span></span>
+          <span class="nav-tc" style="font-size:1rem;color:var(--matcha);opacity:0;">✓</span>
+        </button>
+        <button class="nav-theme-opt" data-theme="redblush" onclick="applyTheme('redblush',this);closeMobileMenu();" style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:12px;border:2px solid transparent;background:transparent;width:100%;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s;">
+          <span style="width:28px;height:28px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#9E182B 50%,#F9CBD6 50%);display:inline-block;box-shadow:0 2px 6px rgba(0,0,0,0.15);"></span>
+          <span style="display:flex;flex-direction:column;text-align:left;flex:1;"><span style="font-size:0.85rem;font-weight:700;color:var(--text-dark);">Red Blush</span><span style="font-size:0.7rem;color:var(--text-light);">Rose quartz &amp; red wine 🍒</span></span>
           <span class="nav-tc" style="font-size:1rem;color:var(--matcha);opacity:0;">✓</span>
         </button>
       </div>
